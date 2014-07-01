@@ -33,11 +33,12 @@ local tonumber = tonumber
 local tostring = tostring
 local type = type
 
-module("splay.benc")
+--module("splay.benc")
+local splay_benc = {}
 
-_COPYRIGHT   = "Copyright 2006 - 2011"
-_DESCRIPTION = "Enhanced bencoding for Lua"
-_VERSION     = 1.0
+--_COPYRIGHT   = "Copyright 2006 - 2011"
+--_DESCRIPTION = "Enhanced bencoding for Lua"
+--_VERSION     = 1.0
 
 local pos = 1
 local data = nil
@@ -52,7 +53,7 @@ local function back()
 	pos = pos - 1
 end
 
-function decode(d)
+function splay_benc.decode(d)
 
 	if d then
 		data = d
@@ -167,29 +168,29 @@ local function encode_table(data,out)
 		end
 	end
 end
-function encode(data)
+function splay_benc.encode(data)
 	local out = { n=1 }
 	encode_table(data, out)
 	return table.concat(out)
 end
 
-function send(socket, data)
-	return socket:send(encode(data))
+function splay_benc.send(socket, data)
+	return socket:send(splay_benc.encode(data))
 end
 
-function receive(socket)
+function splay_benc.receive(socket)
 	local data, status = socket:receive()
 	if not data then
 		return nil, status
 	end
-	local ok, data = pcall(function() return decode(data) end)
+	local ok, data = pcall(function() return splay_benc.decode(data) end)
 	if ok then return data else return nil, "corrupted" end
 end
 
 -- Socket wrapper
 -- Use only with ':' methods or xxx.super:method() if you want to use the
 -- original one.
-function wrap(socket, err)
+function splay_benc.wrap(socket, err)
 	if string.find(tostring(socket), "#BENC") then
 		return socket
 	end
@@ -222,12 +223,14 @@ function wrap(socket, err)
 	setmetatable(wrap_obj, mt)
 
 	wrap_obj.send = function(self, data)
-		return send(self.super, data)
+		return splay_benc.send(self.super, data)
 	end
 
 	wrap_obj.receive = function(self, max_length)
-		return receive(self.super, max_length)
+		return splay_benc.receive(self.super, max_length)
 	end
 
 	return wrap_obj
 end
+
+return splay_benc

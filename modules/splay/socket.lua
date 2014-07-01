@@ -38,7 +38,7 @@ When you need a socket, in any file, require this one.
 
 -- If socket exists, it can be a socket.core + restricted.
 if not socket then
-	socket = require"socket.core"
+	socket = require"socket"
 end
 
 -- kept global to be able to change the debug level easily (without having to

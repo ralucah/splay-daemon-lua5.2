@@ -43,13 +43,14 @@ local type = type
 local tonumber = tonumber
 local print = print
 
-module("splay.llenc")
+--module("splay.llenc")
+local splay_llenc = {}
 
-_COPYRIGHT = "Copyright 2006 - 2011"
-_DESCRIPTION = "LLenc send and receive functions (socket wrapper or standalone)"
-_VERSION     = 1.3
+--_COPYRIGHT = "Copyright 2006 - 2011"
+--_DESCRIPTION = "LLenc send and receive functions (socket wrapper or standalone)"
+--_VERSION     = 1.3
 
-function encode(data)
+function splay_llenc.encode(data)
 	if type(data) ~= "string" then
 		data = tostring(data)
 	end
@@ -77,12 +78,12 @@ end
 local function send_array(s, t)
 	local data = ""
 	for _, e in ipairs(t) do
-		data = data..encode(e)
+		data = data..splay_llenc.encode(e)
 	end
 	return s:send(data)
 end
 
-function send(s, data)
+function splay_llenc.send(s, data)
 	if not data then return nil, "no data" end
 	if type(data) == "table" then
 		return send_array(s, data)
@@ -92,7 +93,7 @@ function send(s, data)
 	return nil, "not sendable type"
 end
 
-function receive(s, max_length)
+function splay_llenc.receive(s, max_length)
 	local max_length = max_length or math.huge
 	
 	local length, status = s:receive("*l")
@@ -109,13 +110,13 @@ function receive(s, max_length)
 end
 
 -- return array of results or nil, error, already_received_results
-function receive_array(s, number, max_length)
+function splay_llenc.receive_array(s, number, max_length)
 	number = number or 1
 	local r = {}
 	local c = 0
 	while c < number do
 		c = c + 1
-		local d, err = receive(s, max_length)
+		local d, err = splay_llenc.receive(s, max_length)
 		-- even 1 error, we return only the error and not an array
 		if not d then return nil, err, r end
 		r[#r + 1] = d
@@ -126,7 +127,7 @@ end
 -- Socket wrapper
 -- Use only with ':' methods or xxx.super:method() if you want to use the
 -- original one.
-function wrap(socket, err)
+function splay_llenc.wrap(socket, err)
 	if string.find(tostring(socket), "#LLENC") then
 		return socket
 	end
@@ -161,12 +162,14 @@ function wrap(socket, err)
 	end
 
 	wrap_obj.receive_array = function(self, number, max_length)
-		return receive_array(self.super, number, max_length)
+		return splay_llenc.receive_array(self.super, number, max_length)
 	end
 
 	wrap_obj.receive = function(self, max_length)
-		return receive(self.super, max_length)
+		return splay_llenc.receive(self.super, max_length)
 	end
 
 	return wrap_obj
 end
+
+return splay_llenc

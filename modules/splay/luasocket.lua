@@ -51,14 +51,16 @@ local error = error
 local pairs = pairs
 local print = print
 local assert= assert
-module("splay.luasocket")
+--module("splay.luasocket")
+local splay_luasocket = {}
 
-_COPYRIGHT   = "Copyright 2006 - 2011"
-_DESCRIPTION = "LuaSocket helper module"
-_VERSION     = 1.0
+--_COPYRIGHT   = "Copyright 2006 - 2011"
+--_DESCRIPTION = "LuaSocket helper module"
+--_VERSION     = 1.0
 
 --[[ DEBUG ]]--
-l_o = log.new(3, "[".._NAME.."]")
+local _NAME = "splay_luasocket"
+splay_luasocket.l_o = log.new(3, "[".._NAME.."]")
 
 --[[
 Set use_async_dns=false to use the default LuaSocket's blocking DNS resolution.
@@ -68,7 +70,7 @@ in case of errors.
 --]]
 local use_async_dns=true
 
-function wrap(socket, err)
+function splay_luasocket.wrap(socket, err)
 
 	if socket.connect then
 		-- Already luasocket additionnal function...
@@ -163,7 +165,7 @@ function wrap(socket, err)
 					 if m then break end
 				end	
 				sock:close()		
-				if not m then l_o:error("All DNS servers failed"); return end
+				if not m then splay_luasocket.l_o:error("All DNS servers failed"); return end
 		    	local r=dns:decode_and_cache(m)			
 				local first,full= dns:read_response(r,field)
 				if first then
@@ -172,7 +174,7 @@ function wrap(socket, err)
 					elseif field=='ptr' then full.name=first end
 					full.alias={} --TODO
 					full.ip={}
-					--l_o:debug("Content of full.answer, to be filled in full.ip:")
+					--splay_luasocket.l_o:debug("Content of full.answer, to be filled in full.ip:")
 					for k,v in pairs(full.answer) do
 						full.ip[k]= v[field]
 					end
@@ -278,3 +280,5 @@ function wrap(socket, err)
 
 	return socket
 end
+
+return splay_luasocket

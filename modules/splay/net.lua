@@ -34,9 +34,9 @@ local pairs = pairs
 --module("splay.net")
 local splay_net = {}
 
-splay_net._COPYRIGHT   = "Copyright 2006 - 2011"
-splay_net._DESCRIPTION = "Network related functions, objects, .."
-splay_net._VERSION     = 1.0
+--_COPYRIGHT   = "Copyright 2006 - 2011"
+--_DESCRIPTION = "Network related functions, objects, .."
+--_VERSION     = 1.0
 
 --[[ DEBUG ]]--
 local _NAME = "splay.net"
@@ -117,14 +117,14 @@ function splay_net.client(ip, port, handler, timeout)
 		port = ip.port
 		ip = ip.ip
 	end
-	timeout = timeout or settings.connect_timeout
+	timeout = timeout or splay_net.settings.connect_timeout
 
 	local s, msg = socket.tcp()
 	if s then
 		s:settimeout(timeout)
 		local ok, msg = s:connect(ip, port)
 		if ok then
-			s:settimeout(settings.timeout)
+			s:settimeout(splay_net.settings.timeout)
 			async(s, handler, nil, true)
 		else
 			splay_net.l_o:warning("Cannot connect peer "..ip..":"..port..": "..msg)
