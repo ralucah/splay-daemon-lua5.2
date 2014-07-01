@@ -154,6 +154,7 @@ end
 -- Non blocking accept()
 local function accept(socket, timeout)
 	--splay_socket_events.l_o:debug("accept("..tostring(timeout)..")")
+    print("socket_events.accept")
 
 	-- We need to call accept() once before giving the socket to select() if we
 	-- want to be sure to non-block
@@ -165,6 +166,7 @@ local function accept(socket, timeout)
 	local end_time = nil
 	if timeout then end_time = time() + timeout end
 
+    print("socket_events before while true")
 	while true do
 		-- I don't know if accept() like connect() has the
 		-- "Operation already in progress" error...

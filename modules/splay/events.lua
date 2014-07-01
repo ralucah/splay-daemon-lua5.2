@@ -640,6 +640,7 @@ function splay_events.sleep(time)
 end
 
 function splay_events.yield()
+    print("i wonder is events.yield works")
 	return coroutine.yield()
 end
 
@@ -868,7 +869,7 @@ splay_events.loop = splay_events.run
 -- Useful in functions maybe called by TCP RPC so the caller get the
 -- function feed-back and socket is closed properly before exiting.
 function splay_events.exit()
-	thread(function()
+	splay_events.thread(function()
 		sleep(0.1)
 		os.exit()
 	end)

@@ -157,7 +157,9 @@ function splay_net.server(port, handler, max, filter, backlog)
 		if port.ip then ip=port.ip end
 		port = port.port
 	end
+
 	local s, err = socket.bind(ip, port, backlog)
+
 	if not s then
 		splay_net.l_o:warn("server bind("..port.."): "..err)
 		return nil, err
