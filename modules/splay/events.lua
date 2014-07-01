@@ -503,7 +503,7 @@ function splay_events.periodic(time, handler, force)
 		handler = tmp
 	end
 
-	return thread(function()
+	return splay_events.thread(function()
 		local h, t
 		while sleep(time) do
 			splay_events.l_o:notice("Periodic run "..tostring(handler).." ("..time..")")
@@ -512,9 +512,9 @@ function splay_events.periodic(time, handler, force)
 				if h and t and dead(h) then t = nil end
 
 				if type(handler) == "table" then
-					thread(handler)
+					splay_events.thread(handler)
 				else
-					h = thread(handler)
+					h = splay_events.thread(handler)
 					-- we keep that copy to avoid it can be garbage collected and so
 					-- the possibility that another thread to have the same name (h)
 					t = threads_ref[h]
@@ -661,7 +661,7 @@ end
 function splay_events.run(th)
 
 	-- shortcut for "main"
-	if th then thread(th) end
+	if th then splay_events.thread(th) end
 
 	while true do
 

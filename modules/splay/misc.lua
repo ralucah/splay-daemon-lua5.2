@@ -79,9 +79,9 @@ function splay_misc.gen_string(times, s)
 
 	local t = math.floor(times / 2)
 	if times % 2 == 0 then
-		return gen_string(s..s, t)
+		return splay_misc.gen_string(s..s, t)
 	else
-		return gen_string(s..s, t)..s
+		return splay_misc.gen_string(s..s, t)..s
 	end
 end
 
