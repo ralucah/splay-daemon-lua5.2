@@ -632,9 +632,9 @@ end
 
 function splay_events.sleep(time)
 	if not time or time < 0 then
-		yield()
+		splay_events.yield()
 	else
-		wait("event:sleep", time)
+		splay_events.wait("event:sleep", time)
 	end
 	return true
 end
