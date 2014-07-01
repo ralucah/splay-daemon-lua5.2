@@ -57,26 +57,29 @@ local io = require"io"
 local tostring = tostring
 local type = type
 local ori_print = print
+local select = select
 
-module("splay.log")
+--module("splay.log")
+local splay_log = {}
 
-_COPYRIGHT   = "Copyright 2006 - 2011"
-_DESCRIPTION = "Splay Log"
-_VERSION     = 1.0
+--_COPYRIGHT   = "Copyright 2006 - 2011"
+--_DESCRIPTION = "Splay Log"
+--_VERSION     = 1.0
 
 -- default level
-global_level = 3
+splay_log.global_level = 3
 
 -- default out (outs support only one parameter !)
-function global_out(msg)
+function splay_log.global_out(msg)
 	local msg = msg or ""
 	ori_print(tostring(msg))
 	io.flush()
 end
 
 -- not do any level filtering here
-function global_write(level, ...)
+function splay_log.global_write(level, ...)
 	local m = ""
+    local arg = {n=select('#',...),...}
 
 	-- do not use ipairs, first arg nil => end the loop !
 	local first = true
@@ -101,10 +104,10 @@ function global_write(level, ...)
 	return m
 end
 
-function global_filter(self, level, ...)
-	local my_level = self.level or global_level
-	local my_out = self.out or global_out
-	local my_write = self.write or global_write
+function splay_log.global_filter(self, level, ...)
+	local my_level = self.level or splay_log.global_level
+	local my_out = self.out or splay_log.global_out
+	local my_write = self.write or splay_log.global_write
 	
 	if not (my_level and my_out and my_write) then
 		print("missing function(s)")
@@ -121,11 +124,11 @@ function global_filter(self, level, ...)
 	end
 end
 
-function new(level, prefix)
+function splay_log.new(level, prefix)
 	return {
 		level = level,
 		prefix = prefix,
-		filter = global_filter,
+		filter = splay_log.global_filter,
 		debug = function(self, ...) return self:filter(1, ...) end,
 		notice = function(self, ...) return self:filter(2, ...) end,
 		warning = function(self, ...) return self:filter(3, ...) end,
@@ -155,18 +158,20 @@ local function check(self, l, ...)
 	end
 end
 
-debug = function(self, ...) return check(self, 1, ...) end
-notice = function(self, ...) return check(self, 2, ...) end
-warning = function(self, ...) return check(self, 3, ...) end
-error = function(self, ...) return check(self, 4, ...) end
-print = function(self, ...) return check(self, 5, ...) end
+splay_log.debug = function(self, ...) return check(self, 1, ...) end
+splay_log.notice = function(self, ...) return check(self, 2, ...) end
+splay_log.warning = function(self, ...) return check(self, 3, ...) end
+splay_log.error = function(self, ...) return check(self, 4, ...) end
+splay_log.print = function(self, ...) return check(self, 5, ...) end
 
 -- aliases
-info = notice
-warn = warning
-d = debug
-n = notice
-i = info
-w = warning
-e = error
-p = print
+splay_log.info = splay_log.notice
+splay_log.warn = splay_log.warning
+splay_log.d = splay_log.debug
+splay_log.n = splay_log.notice
+splay_log.i = splay_log.info
+splay_log.w = warning
+splay_log.e = splay_log.error
+splay_log.p = splay_log.print
+
+return splay_log

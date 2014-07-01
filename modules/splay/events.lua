@@ -107,14 +107,16 @@ local tostring = tostring
 local unpack = unpack
 local time = misc.time
 
-module("splay.events")
+--module("splay.events")
+local splay_events = {}
 
-_COPYRIGHT   = "Copyright 2006 - 2011"
-_DESCRIPTION = "Generic events dispatcher with timeouts using LuaSocket select()"
-_VERSION     = 1.0
+--_COPYRIGHT   = "Copyright 2006 - 2011"
+--_DESCRIPTION = "Generic events dispatcher with timeouts using LuaSocket select()"
+--_VERSION     = 1.0
 
 --[[ DEBUG ]]--
-l_o = log.new(3, "[".._NAME.."]")
+local _NAME="splay.events"
+splay_events.l_o = log.new(3, "[".._NAME.."]")
 
 ----------------------------------------[[ LOCKS ]]--
 
@@ -158,7 +160,7 @@ local function unlock_die(co, err)
 end
 
 -- create a counting semaphore object, only use with o:lock() and o:unlock()
-function semaphore(max, secure)
+function splay_events.semaphore(max, secure)
 	if secure == nil then
 		secure = 1
 	end
@@ -222,14 +224,14 @@ function semaphore(max, secure)
 end
 
 -- alias
-function lock(secure) return semaphore(1, secure) end
+function splay_events.lock(secure) return splay_events.semaphore(1, secure) end
 
 -- DEPRECATED
-function new_lock(...) return lock(...) end
-function new_semaphore(...) return semaphore(...) end
+function splay_events.new_lock(...) return splay_events.lock(...) end
+function splay_events.new_semaphore(...) return splay_events.semaphore(...) end
 
 local lock_f = {}
-function synchronize(f, timeout)
+function splay_events.synchronize(f, timeout)
 	local name = tostring(f)
 	if not lock_f[name] then
 		lock_f[name] = lock()
@@ -295,23 +297,23 @@ local function die(co, typ, event)
 	if typ == "end" then
 		unlock_die(co, false)
 		end_count = end_count + 1
-		l_o:notice(name.." DIE (end)")
+		splay_events.l_o:notice(name.." DIE (end)")
 
 	elseif typ == "error" then
 		unlock_die(co, true)
 		end_count = end_count + 1
-		l_o:error(name.." DIE (error: "..tostring(event)..")")
-		l_o:error(debuglib.traceback(co))
+		splay_events.l_o:error(name.." DIE (error: "..tostring(event)..")")
+		splay_events.l_o:error(debuglib.traceback(co))
 	
 	elseif typ == "kill" then
 		unlock_die(co, false)
 		kill_count = kill_count + 1
-		l_o:notice(name.." DIE (kill)")
+		splay_events.l_o:notice(name.." DIE (kill)")
 
 	elseif typ == "selfkill" then
 		unlock_die(co, false)
 		kill_count = kill_count + 1
-		l_o:notice(name.." DIE (self kill)")
+		splay_events.l_o:notice(name.." DIE (self kill)")
 	end
 	return true
 end
@@ -335,7 +337,7 @@ local function run_n_insert(co, ret, tm)
 
 	if ret then s_arg = ret.arg end
 
-	--l_o:debug(tostring(co).." RUN with "..tostring(s_arg))
+	--splay_events.l_o:debug(tostring(co).." RUN with "..tostring(s_arg))
 	
 	if tm then
 		ok, event, arg, arg2 = coroutine.resume(co, false, "timeout")
@@ -375,9 +377,9 @@ local function run_n_insert(co, ret, tm)
 		if timeout then timeouts[co] = timeout + time() end
 
 		--if timeout then
-			--l_o:debug(tostring(co).." SUSPEND wait "..tostring(timeout).."s for: "..tostring(event))
+			--splay_events.l_o:debug(tostring(co).." SUSPEND wait "..tostring(timeout).."s for: "..tostring(event))
 		--else
-			--l_o:debug(tostring(co).." SUSPEND wait for: "..tostring(event))
+			--splay_events.l_o:debug(tostring(co).." SUSPEND wait for: "..tostring(event))
 		--end
 		
 	else
@@ -417,7 +419,7 @@ local function eligible_threads(all)
 	return false
 end
 
-function count_threads()
+function splay_events.count_threads()
 	-- "new" threads
 	local c = #new_threads
 	-- "normal" events
@@ -471,12 +473,12 @@ local function single_thread(th)
 	end
 	local name = tostring(co)
 	threads_ref[name] = co
-	l_o:notice(name.." NEW")
+	splay_events.l_o:notice(name.." NEW")
 	new_threads[#new_threads + 1] = co
 	return name
 end
 
-function thread(th)
+function splay_events.thread(th)
 	if type(th) == "table" then
 		local r = {}
 		for _, t in pairs(th) do
@@ -492,7 +494,7 @@ end
 -- Try only at time ticks (if the previous call is not finished, retry only
 -- at the next schedule).
 -- Use force to avoid the check of the previous call.
-function periodic(time, handler, force)
+function splay_events.periodic(time, handler, force)
 
 	-- compatibility when the 2 first parameters were swapped
 	if type(handler) == "number" then
@@ -504,7 +506,7 @@ function periodic(time, handler, force)
 	return thread(function()
 		local h, t
 		while sleep(time) do
-			l_o:notice("Periodic run "..tostring(handler).." ("..time..")")
+			splay_events.l_o:notice("Periodic run "..tostring(handler).." ("..time..")")
 			if not h or force or dead(h) then
 				-- reset the backup
 				if h and t and dead(h) then t = nil end
@@ -518,7 +520,7 @@ function periodic(time, handler, force)
 					t = threads_ref[h]
 				end
 			else
-				l_o:warning("Periodic: "..tostring(h).." from "..tostring(handler)..
+				splay_events.l_o:warning("Periodic: "..tostring(h).." from "..tostring(handler)..
 						" is not dead, we wait")
 			end
 		end
@@ -569,7 +571,7 @@ local function single_kill(th)
 	end
 end
 
-function kill(th)
+function splay_events.kill(th)
 	if type(th) == "table" then
 		local r = {}
 		for _, t in pairs(th) do
@@ -581,7 +583,7 @@ function kill(th)
 	end
 end
 
-function status(th)
+function splay_events.status(th)
 	if type(th) == "string" then
 		if threads_ref[th] then
 			return coroutine.status(threads_ref[th])
@@ -593,7 +595,7 @@ function status(th)
 	end
 end
 
-function dead(th)
+function splay_events.dead(th)
 	if not th then return true end -- behavior kept for compatibility
 	if status(th) == "dead" then
 		return true
@@ -603,19 +605,19 @@ function dead(th)
 end
 
 -- Fire an event (don't yield)
-function fire(event, ...)
+function splay_events.fire(event, ...)
 	if not events[event] then
-		--l_o:debug(tostring(coroutine.running()).." FIRE: "..tostring(event))
+		--splay_events.l_o:debug(tostring(coroutine.running()).." FIRE: "..tostring(event))
 		events[event] = {arg = {...}}
 		return true
 	else
-		l_o:notice(tostring(coroutine.running()).." ALREADY FIRED: "..tostring(event))
+		splay_events.l_o:notice(tostring(coroutine.running()).." ALREADY FIRED: "..tostring(event))
 		return false
 	end
 end
 
-function wait(event, timeout)
-	--l_o:debug(tostring(coroutine.running()).." WAIT: "..tostring(event).." TM: "..tostring(timeout))
+function splay_events.wait(event, timeout)
+	--splay_events.l_o:debug(tostring(coroutine.running()).." WAIT: "..tostring(event).." TM: "..tostring(timeout))
 	local ok, r = coroutine.yield(event, timeout)
 	if timeout then
 		if ok then
@@ -628,7 +630,7 @@ function wait(event, timeout)
 	end
 end
 
-function sleep(time)
+function splay_events.sleep(time)
 	if not time or time < 0 then
 		yield()
 	else
@@ -637,26 +639,26 @@ function sleep(time)
 	return true
 end
 
-function yield()
+function splay_events.yield()
 	return coroutine.yield()
 end
 
 -- When there is a select() timeout or no select at all, we do like if all
 -- sockets have received an event to execute their threads.
 local function mark_all()
-	--l_o:debug("mark_all")
+	--splay_events.l_o:debug("mark_all")
 	mark_all_count = mark_all_count + 1
 	for sock, _ in pairs(socket_queue["receive"]) do
-		--l_o:debug("Artificial socket event receive: "..tostring(sock))
+		--splay_events.l_o:debug("Artificial socket event receive: "..tostring(sock))
 		socket_events["receive"][#socket_events["receive"] + 1] = sock
 	end
 	for sock, _ in pairs(socket_queue["send"]) do
-		--l_o:debug("Artificial socket event send: "..tostring(sock))
+		--splay_events.l_o:debug("Artificial socket event send: "..tostring(sock))
 		socket_events["send"][#socket_events["send"] + 1] = sock
 	end
 end
 
-function run(th)
+function splay_events.run(th)
 
 	-- shortcut for "main"
 	if th then thread(th) end
@@ -664,7 +666,7 @@ function run(th)
 	while true do
 
 		loop_count = loop_count + 1
-		--l_o:debug("loop "..loop_count)
+		--splay_events.l_o:debug("loop "..loop_count)
 
 		--[[ RUN NEW THREADS ]]--	
 			
@@ -683,7 +685,7 @@ function run(th)
 		local aet = eligible_threads()
 		local htt, htt_time = have_threads_timeouted(ct)
 
-		--l_o:debug("Status:", "aet", aet, "htt", htt, "htt_time", htt_time - ct)
+		--splay_events.l_o:debug("Status:", "aet", aet, "htt", htt, "htt_time", htt_time - ct)
 
 		if next(socket_queue["receive"]) or next(socket_queue["send"]) then
 			-- If there is already eligible threads or threads that have
@@ -706,7 +708,7 @@ function run(th)
 				if #sr + #ss < 1024 then -- workaround FD_SETSIZE
 					-- don't seems to be necessary on recents systems
 				
-					--l_o:debug("pre-select()", #sr, #ss)
+					--splay_events.l_o:debug("pre-select()", #sr, #ss)
 
 					select_count = select_count + 1
 
@@ -727,7 +729,7 @@ function run(th)
 						-- between the previous call and here.
 						-- UPDATE normally not possible anymore
 						if tt > 0 then
-							--l_o:debug("select()", tt)
+							--splay_events.l_o:debug("select()", tt)
 							socks_r, socks_s, status = socket.select(sr, ss, tt)
 						end
 					end
@@ -740,7 +742,7 @@ function run(th)
 						if socks_r then socket_events["receive"] = socks_r end
 						if socks_s then socket_events["send"] = socks_s end
 					else
-						--l_o:debug("select() timeout", tt)
+						--splay_events.l_o:debug("select() timeout", tt)
 						mark_all()
 					end
 				else
@@ -755,7 +757,7 @@ function run(th)
 				-- Be careful to not call sleep() with a negative value
 				if htt_time > ct then
 					-- We will sleep a little (until the next timeout)
-					--l_o:debug("Sleeping: "..tostring(htt_time - ct))
+					--splay_events.l_o:debug("Sleeping: "..tostring(htt_time - ct))
 					socket.sleep(htt_time - ct)
 				end
 			end
@@ -764,10 +766,10 @@ function run(th)
 		--[[ STOP ]]--
 
 		if not next(timeouts) and not eligible_threads(true) then
-			l_o:notice("No threads to run with available events, we halt.")
+			splay_events.l_o:notice("No threads to run with available events, we halt.")
 			-- if we use select() when we are here there is at least one event
 			-- (or we have something in timeout list).
-			--l_o:debug("count threads: ", count_threads())
+			--splay_events.l_o:debug("count threads: ", count_threads())
 			break
 		end
 
@@ -796,7 +798,7 @@ function run(th)
 					-- We copy and remove all thread for that event
 					local tmp = queue[event]
 					queue[event] = nil
-					--l_o:debug("Event removed: "..tostring(event))
+					--splay_events.l_o:debug("Event removed: "..tostring(event))
 
 					for _, thread in ipairs(tmp) do
 						run_n_insert(thread, events_tmp[event])
@@ -833,7 +835,7 @@ function run(th)
 				-- We copy and remove all threads for that event
 				local tmp = socket_queue[event][sock]
 				socket_queue[event][sock] = nil
-				--l_o:debug("Socket event removed: "..event..":"..tostring(sock))
+				--splay_events.l_o:debug("Socket event removed: "..event..":"..tostring(sock))
 
 				for _, thread in ipairs(tmp) do
 					run_n_insert(thread)
@@ -851,7 +853,7 @@ function run(th)
 				-- We copy and remove all threads for that event
 				local tmp = socket_queue[event][sock]
 				socket_queue[event][sock] = nil
-				--l_o:debug("Socket event removed: "..event..":"..tostring(sock))
+				--splay_events.l_o:debug("Socket event removed: "..event..":"..tostring(sock))
 
 				for _, thread in ipairs(tmp) do
 					run_n_insert(thread)
@@ -861,18 +863,18 @@ function run(th)
 	end
 end
 -- DEPRECATED
-loop = run
+splay_events.loop = splay_events.run
 
 -- Useful in functions maybe called by TCP RPC so the caller get the
 -- function feed-back and socket is closed properly before exiting.
-function exit()
+function splay_events.exit()
 	thread(function()
 		sleep(0.1)
 		os.exit()
 	end)
 end
 
-function infos()
+function splay_events.infos()
 	local count_ev = 0
 	local count_sock_send_ev = 0
 	local count_sock_recv_ev = 0
@@ -912,3 +914,5 @@ function infos()
 			" Total new: "..new_count.." end: "..end_count.." kill: "..kill_count.."\n"..
 			"Loops: "..loop_count.." Selects: "..select_count.." Mark all: "..mark_all_count
 end
+
+return splay_events
